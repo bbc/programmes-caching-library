@@ -1,0 +1,22 @@
+{
+    "name": "bbc/programmes-caching-library",
+    "description": "Caching for /programmes projects",
+    "type": "library",
+    "require": {
+        "php": ">=7.1.0",
+        "psr/cache": "^1.0"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "BBC\\ProgrammesCachingLibrary\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\BBC\\ProgrammesCachingLibrary\\": "tests/"
+        }
+    }
+}
