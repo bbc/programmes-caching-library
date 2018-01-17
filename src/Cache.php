@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace BBC\ProgrammesCachingLibrary;
 
@@ -28,7 +29,7 @@ class Cache implements CacheInterface
         CacheInterface::INDEFINITE => 0,
     ];
 
-    /** @var array */
+    /** @var int[] */
     private $cacheTimes;
 
     public function __construct(
@@ -122,11 +123,12 @@ class Cache implements CacheInterface
     {
         // Please help prevent cache namespace collisions by driving carefully
         $uniqueValues = str_replace('.', '_', array_map(function ($v) {
-            return (is_null($v)) ? "" : $v;
+            return $v ?? '';
         }, $uniqueValues));
         $uniqueValues = preg_replace('!_+!', '_', $uniqueValues);
         $values = array_merge([$className, $functionName], $uniqueValues);
-        return join('.', $values);
+
+        return implode('.', $values);
     }
 
     public function setFlushCacheItems(bool $flushCacheItems): void
@@ -154,6 +156,7 @@ class Cache implements CacheInterface
      *
      * @param int|string $ttl
      * @return int
+     * @throws InvalidArgumentException
      */
     private function calculateTtl($ttl): int
     {
@@ -176,8 +179,8 @@ class Cache implements CacheInterface
      */
     private function protectLifetimeFromStampede(int $ttl): int
     {
-        $ten = floor($ttl / 10);
-        $modifier = rand(0, $ten);
+        $ten = (int) floor($ttl / 10);
+        $modifier = random_int(0, $ten);
         $modifier = min($modifier, 120);
         return $ttl + $modifier;
     }
