@@ -2,12 +2,6 @@
     "name": "bbc/programmes-caching-library",
     "description": "Caching for /programmes projects",
     "type": "library",
-    "authors": [
-        {
-            "name": "Felipe Araujo",
-            "email": "felipe.peixotodearaujo@bbc.co.uk"
-        }
-    ],
     "require": {
         "php": ">=7.1.0",
         "psr/cache": "^1.0"
