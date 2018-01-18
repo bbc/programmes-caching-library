@@ -179,6 +179,10 @@ class Cache implements CacheInterface
      */
     private function protectLifetimeFromStampede(int $ttl): int
     {
+        if ($ttl < 0) {
+            return $ttl;
+        }
+
         $ten = (int) floor($ttl / 10);
         $modifier = random_int(0, $ten);
         $modifier = min($modifier, 120);
