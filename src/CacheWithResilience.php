@@ -57,16 +57,16 @@ class CacheWithResilience extends Cache
         $item = $this->cachePool->getItem($key);
         if ($item->isHit()) {
             $value = $item->get();
-            // we have 2 TTL's, one of them is stored with the item as $value['ttl'] and is the time
+            // we have 2 TTL's, one of them is stored with the item as $value['expiresAt'] and is the time
             // when we want the item to be consider as expired, the second one is the real TTL that we tell redis.
             // The second one is only mean to be used in case of issues like DB down and only requires to
             // set $returnStaleValue to true
-            if (false === $returnStaleValue && new DateTime() > $value['ttl']) {
+            if (false === $returnStaleValue && new DateTime() > $value['expiresAt']) {
                 return new CacheItem();
             }
         }
 
-        // in setItem() value gets wrapped into an array with the ttl. set the item to its original value
+        // in setItem() value gets wrapped into an array. set the item to its original value
         $val = $item->get();
         $item->set($val['value']);
 
@@ -90,7 +90,7 @@ class CacheWithResilience extends Cache
             $ttl = $this->calculateTtl($ttl);
             $item->expiresAfter($ttl);
             // getItem() expects the item to be wrapped as [value, ttl]
-            $item->set(['value' => $value, 'ttl' => $ttl]);
+            $item->set(['value' => $value, 'expiresAt' => $ttl]);
             return $this->cachePool->save($item);
         } else {
             $ttl = $this->calculateTtl($ttl);
@@ -98,8 +98,8 @@ class CacheWithResilience extends Cache
             $expiresAt = $expiresAt->add(new DateInterval('PT' . $ttl . 'S'));
         }
 
-        // save the ttl within the stored item so we can know if a returned key is expired.
-        $item->set(['value' => $value, 'ttl' => $expiresAt]);
+        // save the expire time within the stored item so we can know if a returned key is expired.
+        $item->set(['value' => $value, 'expiresAt' => $expiresAt]);
 
         // instead of setting the item to expire at $expiresAt we use "RESILIENCE_TTL"
         // this way in case of error we can return the stale value
