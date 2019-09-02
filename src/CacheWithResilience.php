@@ -85,7 +85,7 @@ class CacheWithResilience extends Cache
         // Calculate the date and time when the element should be consider as expire
         if ($ttl instanceof DateTimeInterface) {
             $expiresAt = $ttl;
-        } elseif (\in_array($ttl, [0, -1, CacheInterface::NONE, CacheInterface::INDEFINITE, CacheItemInterface::SHORT], false)) {
+        } elseif (\in_array($ttl, [0, -1, CacheInterface::NONE, CacheInterface::INDEFINITE, CacheInterface::SHORT], false)) {
             // this condition handles a list of exception that shouldn't be cached for a different length
             $ttl = $this->calculateTtl($ttl);
             $item->expiresAfter($ttl);
