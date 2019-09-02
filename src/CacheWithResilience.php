@@ -12,9 +12,9 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Cache\CacheItem;
 
 /**
- * A copy of BBC\ProgrammesCachingLibrary\Cache but with added resilience, when using this class you will cache
- * everything for RESILIENCE_TTL time and in case of an error "getOrSet" will return the stale value or alternatively
- * you can use "getItem" with "$returnStaleValue = true"
+ * An implementation of stale-if-error for the Cache library.
+ * This class is compatible with BBC\ProgrammesCachingLibrary\Cache, the only difference when calling the functions
+ * is that you can call getItem() with an extra parameter to get the stale value.
  */
 class CacheWithResilience extends Cache
 {
@@ -24,8 +24,8 @@ class CacheWithResilience extends Cache
     /** @var \Exception[]  */
     private $whitelistedExceptions;
 
-    // This is used as a resilience system, this extends the TTL but only is used in case of an error.
-    // For example if an API fails we can use the redis stored value instead of displaying nothing or an error.
+    // How long items will persist in the cache server.
+    // This also mean for how long we could serve stale content in case of issues
     private const RESILIENCE_TTL = 21600; // 6h
 
     public function __construct(
@@ -57,7 +57,7 @@ class CacheWithResilience extends Cache
         $item = $this->cachePool->getItem($key);
         if ($item->isHit()) {
             $value = $item->get();
-            // we have 2 levels of cache, one of them is stored with the item as $value['ttl'] and is the time
+            // we have 2 TTL's, one of them is stored with the item as $value['ttl'] and is the time
             // when we want the item to be consider as expired, the second one is the real TTL that we tell redis.
             // The second one is only mean to be used in case of issues like DB down and only requires to
             // set $returnStaleValue to true
@@ -66,7 +66,7 @@ class CacheWithResilience extends Cache
             }
         }
 
-        // value was wrapped into an array with the ttl. set the value back to its original value
+        // in setItem() value gets wrapped into an array with the ttl. set the item to its original value
         $val = $item->get();
         $item->set($val['value']);
 
@@ -82,14 +82,14 @@ class CacheWithResilience extends Cache
      */
     public function setItem(CacheItemInterface $item, $value, $ttl): bool
     {
-        // Calculate the date and time when the element should be consider as expire
+        // this condition calculates the DateTime when the element should be consider as expire
         if ($ttl instanceof DateTimeInterface) {
             $expiresAt = $ttl;
-        } elseif (\in_array($ttl, [0, -1, CacheInterface::NONE, CacheInterface::INDEFINITE, CacheInterface::SHORT], false)) {
-            // this condition handles a list of exception that shouldn't be cached for a different length
+        } elseif (\in_array($ttl, [0, -1, CacheInterface::NONE, CacheInterface::INDEFINITE, CacheInterface::SHORT], true)) {
+            // this case handles a list of exception that shouldn't be cached for a different length
             $ttl = $this->calculateTtl($ttl);
             $item->expiresAfter($ttl);
-            // getItem() expects the item to be wrapped as [val, ttl]
+            // getItem() expects the item to be wrapped as [value, ttl]
             $item->set(['value' => $value, 'ttl' => $ttl]);
             return $this->cachePool->save($item);
         } else {
@@ -98,7 +98,7 @@ class CacheWithResilience extends Cache
             $expiresAt = $expiresAt->add(new DateInterval('PT' . $ttl . 'S'));
         }
 
-        // store the ttl within the stored item so we can know if a returned key is expired.
+        // save the ttl within the stored item so we can know if a returned key is expired.
         $item->set(['value' => $value, 'ttl' => $expiresAt]);
 
         // instead of setting the item to expire at $expiresAt we use "RESILIENCE_TTL"
