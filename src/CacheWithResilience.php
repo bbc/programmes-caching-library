@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace BBC\ProgrammesCachingLibrary;
 
 use DateTime;
-use DateInterval;
 use DateTimeInterface;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
