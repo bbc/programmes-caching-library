@@ -91,7 +91,7 @@ class CacheWithResilience extends Cache
             // this case handles a list of exception that shouldn't be cached for a different length
             $ttl = $this->calculateTtl($ttl);
             $item->expiresAfter($ttl);
-            // getItem() expects the item to be wrapped as [value, ttl]
+            // getItem() expects the item to be wrapped as [value, expiresAt]
             $item->set(['value' => $value, 'expiresAt' => $ttl]);
             return $this->cachePool->save($item);
         } else {
