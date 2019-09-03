@@ -21,21 +21,23 @@ class CacheWithResilience extends Cache
     /** @var LoggerInterface  */
     private $logger;
 
-    /** @var \Exception[]  */
+    /** @var string[] an array with full class name of exceptions */
     private $whitelistedExceptions;
 
     // How long items will persist in the cache server.
     // This also mean for how long we could serve stale content in case of issues
-    private const RESILIENCE_TTL = 21600; // 6h
+    private $resilienceTtl;
 
     public function __construct(
         LoggerInterface $logger,
         CacheItemPoolInterface $cachePool,
         string $prefix,
+        int $resilienceTtl,
         array $cacheTimes = [],
         array $whitelistedExceptions = []
     ) {
         $this->logger = $logger;
+        $this->resilienceTtl = $resilienceTtl;
         $this->whitelistedExceptions = $whitelistedExceptions;
         parent::__construct($cachePool, $prefix, $cacheTimes);
     }
@@ -101,9 +103,9 @@ class CacheWithResilience extends Cache
         // save the expire time within the stored item so we can know if a returned key is expired.
         $item->set(['value' => $value, 'expiresAt' => $expiresAt]);
 
-        // instead of setting the item to expire at $expiresAt we use "RESILIENCE_TTL"
+        // instead of setting the item to expire at $expiresAt we use "$resilienceTtl"
         // this way in case of error we can return the stale value
-        $item->expiresAfter(self::RESILIENCE_TTL);
+        $item->expiresAfter($this->resilienceTtl);
 
         return $this->cachePool->save($item);
     }
