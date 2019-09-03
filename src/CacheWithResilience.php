@@ -84,29 +84,27 @@ class CacheWithResilience extends Cache
      */
     public function setItem(CacheItemInterface $item, $value, $ttl): bool
     {
-        // this condition calculates the DateTime when the element should be consider as expire
-        if ($ttl instanceof DateTimeInterface) {
-            $expiresAt = $ttl;
-        } elseif (\in_array($ttl, [0, -1, CacheInterface::NONE, CacheInterface::INDEFINITE, CacheInterface::SHORT], true)) {
+        if (\in_array($ttl, [0, -1, CacheInterface::NONE, CacheInterface::INDEFINITE, CacheInterface::SHORT], true)) {
             // this case handles a list of exception that shouldn't be cached for a different length
             $ttl = $this->calculateTtl($ttl);
             $item->expiresAfter($ttl);
             // getItem() expects the item to be wrapped as [value, expiresAt]
             $item->set(['value' => $value, 'expiresAt' => $ttl]);
             return $this->cachePool->save($item);
-        } else {
-            $ttl = $this->calculateTtl($ttl);
-            $expiresAt = new DateTime();
-            $expiresAt = $expiresAt->add(new DateInterval('PT' . $ttl . 'S'));
         }
 
+        // this condition calculates the DateTime when the element should be consider as expire
+        if ($ttl instanceof DateTimeInterface) {
+            $expiresAt = $ttl;
+        } else {
+            $ttl = $this->calculateTtl($ttl);
+            $expiresAt = new DateTime("+ {$ttl} seconds");
+        }
         // save the expire time within the stored item so we can know if a returned key is expired.
         $item->set(['value' => $value, 'expiresAt' => $expiresAt]);
-
         // instead of setting the item to expire at $expiresAt we use "$resilienceTtl"
         // this way in case of error we can return the stale value
         $item->expiresAfter($this->resilienceTtl);
-
         return $this->cachePool->save($item);
     }
 
