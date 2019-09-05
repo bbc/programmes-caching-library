@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace BBC\ProgrammesCachingLibrary;
 
-use DateTime;
 use DateTimeInterface;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -62,7 +61,7 @@ class CacheWithResilience extends Cache
             // when we want the item to be consider as expired, the second one is the real TTL that we tell redis.
             // The second one is only mean to be used in case of issues like DB down and only requires to
             // set $returnStaleValue to true
-            if (false === $returnStaleValue && new DateTime() > $value['expiresAt']) {
+            if (false === $returnStaleValue && time() > $value['expiresAt']) {
                 return new CacheItem();
             }
         }
@@ -88,16 +87,16 @@ class CacheWithResilience extends Cache
             $ttl = $this->calculateTtl($ttl);
             $item->expiresAfter($ttl);
             // getItem() expects the item to be wrapped as [value, expiresAt]
-            $item->set(['value' => $value, 'expiresAt' => $ttl]);
+            $item->set(['value' => $value, 'expiresAt' => time() + $ttl]);
             return $this->cachePool->save($item);
         }
 
-        // this condition calculates the DateTime when the element should be consider as expire
+        // this condition calculates the unix timestamp when the element should be consider as expire
         if ($ttl instanceof DateTimeInterface) {
-            $expiresAt = $ttl;
+            $expiresAt = $ttl->getTimestamp();
         } else {
             $ttl = $this->calculateTtl($ttl);
-            $expiresAt = new DateTime("+ {$ttl} seconds");
+            $expiresAt = time() + $ttl;
         }
         // save the expire time within the stored item so we can know if a returned key is expired.
         $item->set(['value' => $value, 'expiresAt' => $expiresAt]);
