@@ -151,7 +151,6 @@ class CacheWithResilience extends Cache
         return $result;
     }
 
-
     private function isWhitelistedException(\Exception $exceptionThrown): bool
     {
         foreach ($this->whitelistedExceptions as $exception) {
