@@ -130,7 +130,7 @@ class CacheWithResilience extends Cache
         } catch (\Exception $e) {
             // if exception is whitelisted, return the stale value
             if ($this->isWhitelistedException($e)) {
-                $this->logger->warning('stale-if-error served for: ' . $cacheItem->getKey());
+                $this->logger->warning('stale-if-error served for: ' . $key);
                 $this->logger->error($e->getMessage());
                 // return stale value instead of failing
                 $cacheItem = $this->getItem($key, true);
@@ -154,7 +154,7 @@ class CacheWithResilience extends Cache
     private function isWhitelistedException(\Exception $exceptionThrown): bool
     {
         foreach ($this->whitelistedExceptions as $exception) {
-            if ($exception instanceof $exceptionThrown) {
+            if ($exceptionThrown instanceof $exception) {
                 return true;
             }
         }
