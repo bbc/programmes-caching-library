@@ -11,15 +11,15 @@ use Psr\Cache\CacheItemPoolInterface;
 class Cache implements CacheInterface
 {
     /** @var CacheItemPoolInterface */
-    private $cachePool;
+    protected $cachePool;
 
     /** @var string */
-    private $prefix;
+    protected $prefix;
 
     /** @var bool */
-    private $flushCacheItems = false;
+    protected $flushCacheItems = false;
 
-    private $defaultCacheTimes = [
+    protected $defaultCacheTimes = [
         CacheInterface::NONE => -1,
         CacheInterface::SHORT => 60,
         CacheInterface::NORMAL => 300,
@@ -30,7 +30,7 @@ class Cache implements CacheInterface
     ];
 
     /** @var int[] */
-    private $cacheTimes;
+    protected $cacheTimes;
 
     public function __construct(
         CacheItemPoolInterface $cachePool,
@@ -143,7 +143,7 @@ class Cache implements CacheInterface
      * @param string $key
      * @return mixed
      */
-    private function standardiseKey(string $key)
+    protected function standardiseKey(string $key)
     {
         $key = $this->prefix . '.' . $key;
         return preg_replace('/[^A-Za-z0-9_\.]/', '_', $key);
@@ -158,7 +158,7 @@ class Cache implements CacheInterface
      * @return int
      * @throws InvalidArgumentException
      */
-    private function calculateTtl($ttl): int
+    protected function calculateTtl($ttl): int
     {
         if (is_numeric($ttl)) {
             $ttl = (int) $ttl;
