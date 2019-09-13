@@ -26,6 +26,8 @@ class CacheWithResilience extends Cache
     // This also mean for how long we could serve stale content in case of issues
     private $resilienceTtl;
 
+    private $staleContentServedCounter = 0;
+
     public function __construct(
         LoggerInterface $logger,
         CacheItemPoolInterface $cachePool,
@@ -130,7 +132,8 @@ class CacheWithResilience extends Cache
         } catch (\Exception $e) {
             // if exception is whitelisted, return the stale value
             if ($this->isWhitelistedException($e)) {
-                $this->logger->warning('stale-if-error served for: ' . $key);
+                $this->staleContentServedCounter++;
+                $this->logger->warning('stale-if-error number ' . $this->staleContentServedCounter . ' served for: ' . $key);
                 $this->logger->error($e->getMessage());
                 // return stale value instead of failing
                 $cacheItem = $this->getItem($key, true);
