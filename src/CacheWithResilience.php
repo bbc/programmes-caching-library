@@ -39,7 +39,7 @@ class CacheWithResilience extends Cache
         $this->logger = $logger;
         $this->resilienceTtl = $resilienceTtl;
         $this->whitelistedExceptions = $whitelistedExceptions;
-        parent::__construct($cachePool, $prefix, $cacheTimes);
+        parent::__construct($cachePool, $prefix . '.resilient', $cacheTimes);
     }
 
     /**
