@@ -132,12 +132,12 @@ class CacheWithResilience extends Cache
         } catch (\Exception $e) {
             // if exception is whitelisted, return the stale value
             if ($this->isWhitelistedException($e)) {
-                $this->staleContentServedCounter++;
-                $this->logger->warning('stale-if-error number ' . $this->staleContentServedCounter . ' served for: ' . $key);
-                $this->logger->error($e->getMessage());
                 // return stale value instead of failing
                 $cacheItem = $this->getItem($key, true);
                 if ($cacheItem->isHit()) {
+                    $this->staleContentServedCounter++;
+                    $this->logger->error('stale-if-error number ' . $this->staleContentServedCounter . ' served for: ' . $key);
+                    $this->logger->error($e->getMessage());
                     return $cacheItem->get();
                 }
             }
