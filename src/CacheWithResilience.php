@@ -64,7 +64,17 @@ class CacheWithResilience extends Cache
             // The second one is only mean to be used in case of issues like DB down and only requires to
             // set $returnStaleValue to true
             if (false === $returnStaleValue && time() > $value['expiresAt']) {
-                return new CacheItem();
+                // set the item isHit to false
+                $resetCacheItem = \Closure::bind(
+                    function () {
+                        $this->value = null;
+                        $this->isHit = false;
+                        return $this;
+                    },
+                    $item,
+                    CacheItem::class
+                );
+                return $resetCacheItem();
             }
         }
 
