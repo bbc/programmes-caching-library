@@ -64,7 +64,9 @@ class CacheWithResilience extends Cache
             // The second one is only mean to be used in case of issues like DB down and only requires to
             // set $returnStaleValue to true
             if (false === $returnStaleValue && time() > $value['expiresAt']) {
-                // set the item isHit to false
+                // we need edit the item to return false when calling "$item->isHit()". In order to do that
+                // we can't edit the $item properties directly because they are protected but instead we can use a bind
+                // closure, this is actually what symfony does to instantiate the item
                 $resetCacheItem = \Closure::bind(
                     function () {
                         $this->value = null;
@@ -76,11 +78,11 @@ class CacheWithResilience extends Cache
                 );
                 return $resetCacheItem();
             }
-        }
 
-        // in setItem() value gets wrapped into an array. set the item to its original value
-        $val = $item->get();
-        $item->set($val['value']);
+            // in setItem() value gets wrapped into an array. set the item to its original value
+            $val = $item->get();
+            $item->set($val['value']);
+        }
 
         return $item;
     }
