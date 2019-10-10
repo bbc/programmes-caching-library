@@ -15,7 +15,6 @@ The library standardizes caching times, which are presented in the following tab
 | CacheInterface::MEDIUM     | 1200       |
 | CacheInterface::LONG       | 7200       |
 | CacheInterface::X_LONG     | 86400      |
-| CacheInterface::INDEFINITE | Indefinite |
 
 License
 -------
