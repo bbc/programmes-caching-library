@@ -12,7 +12,6 @@ interface CacheInterface
     const MEDIUM = 'medium';
     const LONG = 'long';
     const X_LONG = 'xlong';
-    const INDEFINITE = 'indefinite';
 
     public function getItem(string $key): CacheItemInterface;
 

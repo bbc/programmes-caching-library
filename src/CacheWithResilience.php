@@ -64,13 +64,25 @@ class CacheWithResilience extends Cache
             // The second one is only mean to be used in case of issues like DB down and only requires to
             // set $returnStaleValue to true
             if (false === $returnStaleValue && time() > $value['expiresAt']) {
-                return new CacheItem();
+                // we need edit the item to return false when calling "$item->isHit()". In order to do that
+                // we can't edit the $item properties directly because they are protected but instead we can use a bind
+                // closure, this is actually what symfony does to instantiate the item
+                $resetCacheItem = \Closure::bind(
+                    function () {
+                        $this->value = null;
+                        $this->isHit = false;
+                        return $this;
+                    },
+                    $item,
+                    CacheItem::class
+                );
+                return $resetCacheItem();
             }
-        }
 
-        // in setItem() value gets wrapped into an array. set the item to its original value
-        $val = $item->get();
-        $item->set($val['value']);
+            // in setItem() value gets wrapped into an array. set the item to its original value
+            $val = $item->get();
+            $item->set($val['value']);
+        }
 
         return $item;
     }
@@ -84,7 +96,7 @@ class CacheWithResilience extends Cache
      */
     public function setItem(CacheItemInterface $item, $value, $ttl): bool
     {
-        if (\in_array($ttl, [0, -1, CacheInterface::NONE, CacheInterface::INDEFINITE, CacheInterface::SHORT], true)) {
+        if (\in_array($ttl, [-1, CacheInterface::NONE, CacheInterface::SHORT], true)) {
             // this case handles a list of exception that shouldn't be cached for a different length
             $ttl = $this->calculateTtl($ttl);
             $item->expiresAfter($ttl);
