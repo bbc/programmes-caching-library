@@ -26,7 +26,6 @@ class Cache implements CacheInterface
         CacheInterface::MEDIUM => 1200,
         CacheInterface::LONG => 7200,
         CacheInterface::X_LONG => 86400,
-        CacheInterface::INDEFINITE => 0,
     ];
 
     /** @var int[] */
