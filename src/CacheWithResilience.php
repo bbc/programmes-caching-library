@@ -63,7 +63,10 @@ class CacheWithResilience extends Cache
             // when we want the item to be consider as expired, the second one is the real TTL that we tell redis.
             // The second one is only mean to be used in case of issues like DB down and only requires to
             // set $returnStaleValue to true
-            if (false === $returnStaleValue && time() > $value['expiresAt']) {
+            if (false === $returnStaleValue &&
+                !\in_array($value['expiresAt'], [0, CacheInterface::INDEFINITE], true) &&
+                time() > $value['expiresAt']
+            ) {
                 // we need edit the item to return false when calling "$item->isHit()". In order to do that
                 // we can't edit the $item properties directly because they are protected but instead we can use a bind
                 // closure, this is actually what symfony does to instantiate the item
@@ -96,12 +99,22 @@ class CacheWithResilience extends Cache
      */
     public function setItem(CacheItemInterface $item, $value, $ttl): bool
     {
-        if (\in_array($ttl, [0, -1, CacheInterface::NONE, CacheInterface::INDEFINITE, CacheInterface::SHORT], true)) {
+        if (\in_array($ttl, [-1, CacheInterface::NONE, CacheInterface::SHORT], true)) {
             // this case handles a list of exception that shouldn't be cached for a different length
             $ttl = $this->calculateTtl($ttl);
             $item->expiresAfter($ttl);
             // getItem() expects the item to be wrapped as [value, expiresAt]
             $item->set(['value' => $value, 'expiresAt' => time() + $ttl]);
+            return $this->cachePool->save($item);
+        }
+
+        if (\in_array($ttl, [0, CacheInterface::INDEFINITE], true)) {
+            $ttl = $this->calculateTtl($ttl);
+            // If null is passed explicitly, a default value MAY be used.
+            // If none is set, the value should be stored permanently or for as long as the implementation allows.
+            $item->expiresAfter(null);
+            // getItem() expects the item to be wrapped as [value, expiresAt]
+            $item->set(['value' => $value, 'expiresAt' => $ttl]);
             return $this->cachePool->save($item);
         }
 
