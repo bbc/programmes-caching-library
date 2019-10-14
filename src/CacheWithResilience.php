@@ -28,16 +28,20 @@ class CacheWithResilience extends Cache
 
     private $staleContentServedCounter = 0;
 
+    private $isCacheWithResilienceEnabled;
+
     public function __construct(
         LoggerInterface $logger,
         CacheItemPoolInterface $cachePool,
         string $prefix,
         int $resilienceTtl,
         array $cacheTimes = [],
+        bool $isCacheWithResilienceEnabled = true,
         array $whitelistedExceptions = []
     ) {
         $this->logger = $logger;
         $this->resilienceTtl = $resilienceTtl;
+        $this->isCacheWithResilienceEnabled = $isCacheWithResilienceEnabled;
         $this->whitelistedExceptions = $whitelistedExceptions;
         parent::__construct($cachePool, $prefix . '.resilient', $cacheTimes);
     }
@@ -168,6 +172,9 @@ class CacheWithResilience extends Cache
 
     private function isWhitelistedException(\Exception $exceptionThrown): bool
     {
+        if (false === $this->isCacheWithResilienceEnabled) {
+            return false;
+        }
         foreach ($this->whitelistedExceptions as $exception) {
             if ($exceptionThrown instanceof $exception) {
                 return true;
