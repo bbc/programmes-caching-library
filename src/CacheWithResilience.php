@@ -124,7 +124,7 @@ class CacheWithResilience extends Cache
         // this way in case of error we can return the stale value
         $item->expiresAfter($this->resilienceTtl);
         $result = $this->cachePool->save($item);
-        // Because PHP assigns objects by reference after storing the $item in memory we should set it back to
+        // Because PHP assigns objects by reference after storing the $item in redis we should set it back to
         // its original value, this way further operations on $item will behalf as expected
         $item->set($value);
         return $result;
