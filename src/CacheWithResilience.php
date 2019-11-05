@@ -63,8 +63,9 @@ class CacheWithResilience extends Cache
             // when we want the item to be consider as expired, the second one is the real TTL that we tell redis.
             // The second one is only mean to be used in case of issues like DB down and only requires to
             // set $returnStaleValue to true
-            if (false === $returnStaleValue && time() > $value['expiresAt']) {
-                // we need edit the item to return false when calling "$item->isHit()". In order to do that
+            $standardCacheLifetimeExpired = (time() > $value['expiresAt']);
+            if (false === $returnStaleValue && $standardCacheLifetimeExpired) {
+                // we need to edit the item to return false when calling "$item->isHit()". In order to do that
                 // we can't edit the $item properties directly because they are protected but instead we can use a bind
                 // closure, this is actually what symfony does to instantiate the item
                 $resetCacheItem = \Closure::bind(
@@ -77,6 +78,11 @@ class CacheWithResilience extends Cache
                     CacheItem::class
                 );
                 return $resetCacheItem();
+            }
+
+            if ($returnStaleValue && $standardCacheLifetimeExpired) {
+                $this->staleContentServedCounter++;
+                $this->logger->error('stale-if-error number ' . $this->staleContentServedCounter . ' served for: ' . $key);
             }
 
             // in setItem() value gets wrapped into an array. set the item to its original value
@@ -117,7 +123,11 @@ class CacheWithResilience extends Cache
         // instead of setting the item to expire at $expiresAt we use "$resilienceTtl"
         // this way in case of error we can return the stale value
         $item->expiresAfter($this->resilienceTtl);
-        return $this->cachePool->save($item);
+        $result = $this->cachePool->save($item);
+        // Because PHP assigns objects by reference after storing the $item in redis we should set it back to
+        // its original value, this way further operations on $item will behalf as expected
+        $item->set($value);
+        return $result;
     }
 
     /**
@@ -147,8 +157,6 @@ class CacheWithResilience extends Cache
                 // return stale value instead of failing
                 $cacheItem = $this->getItem($key, true);
                 if ($cacheItem->isHit()) {
-                    $this->staleContentServedCounter++;
-                    $this->logger->error('stale-if-error number ' . $this->staleContentServedCounter . ' served for: ' . $key);
                     $this->logger->error($e->getMessage());
                     return $cacheItem->get();
                 }
