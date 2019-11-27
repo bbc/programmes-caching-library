@@ -41,7 +41,7 @@ class Cache implements CacheInterface
         $this->cacheTimes = array_merge($this->defaultCacheTimes, $cacheTimes);
     }
 
-    public function getItem(string $key): CacheItemInterface
+    public function getItem(string $key, bool $returnStaleValue = false): CacheItemInterface
     {
         $key = $this->standardiseKey($key);
         if ($this->flushCacheItems) {

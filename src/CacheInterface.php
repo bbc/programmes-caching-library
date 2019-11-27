@@ -13,7 +13,7 @@ interface CacheInterface
     const LONG = 'long';
     const X_LONG = 'xlong';
 
-    public function getItem(string $key): CacheItemInterface;
+    public function getItem(string $key, bool $returnStaleValue = false): CacheItemInterface;
 
     public function setItem(CacheItemInterface $item, $value, $ttl): bool;
 
